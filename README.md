@@ -3,6 +3,8 @@
 [![Release](https://jitpack.io/v/mee42/kargs.svg)](https://jitpack.io/#mee42/kargs)
 
 ```kotlin
+import dev.mee42.kargs.*
+
 class Args: Kargs() {
     val verbose by flag('v', longHelp = "Enable verbose output")
     val help by flag('h', longHelp = "Display this information")
@@ -28,6 +30,26 @@ class AddCommand: Subcommand("add") {
 
 ```
 A fluent API for parsing command line arguments in kotlin.
+Support for:
+- [x] argument commands
+- [x] flags
+- [x] variadic arguments
+- [x] floating arguments
+- [x] variadic floating arguments
+- [x] default values
+- [x] implicit conversions to non-String types
+- [x] arbitrarily-nested subcommands
+- [x] help menu rendering
+
+Guide:
+
+
+
+
+
+
+
+
 
 Add to your project:
 ```groovy
@@ -59,3 +81,4 @@ dependencies {
     <version>master-SNAPSHOT</version>
 </dependency>
 ```
+
