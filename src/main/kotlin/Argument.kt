@@ -7,6 +7,7 @@ import kotlin.reflect.typeOf
 
 
 inline fun <reified T> Kargs.argMain(
+    name: String?,
     shortChar: Char?,
     longHelp: String?,
     shortHelp: String?,
@@ -21,7 +22,7 @@ inline fun <reified T> Kargs.argMain(
 
 
     val arg = NamedValue(
-        name = property.sanitisedName,
+        name = name ?: property.sanitisedName,
         shortChar = shortChar,
         longHelp = longHelp,
         shortHelp = shortHelp,
@@ -30,28 +31,31 @@ inline fun <reified T> Kargs.argMain(
         default = default
     )
     thisRef.arguments += arg
-    return@PropertyDelegateProvider ArgumentDelegate<T>()
+    return@PropertyDelegateProvider ArgumentDelegate<T>(arg.name)
 }
 
 // can be nullable, does NOT have a default parameter
 inline fun <reified T: Any?> Kargs.arg(
     shortChar: Char? = null,
+    name: String? = null,
     longHelp: String? = null,
     shortHelp: String? = null,
     noinline converter: ((String) -> T)? = null
-): ArgProvider<T> = argMain(shortChar, longHelp, shortHelp, default = Maybe.Nothing(), converter)
+): ArgProvider<T> = argMain(name, shortChar, longHelp, shortHelp, default = Maybe.Nothing(), converter)
 
 // can be nullable, DOES have a a default parameter
 inline fun <reified T: Any?> Kargs.arg(
     shortChar: Char? = null,
+    name: String? = null,
     longHelp: String? = null,
     shortHelp: String? = null,
     default: T,
     noinline converter: ((String) -> T)? = null
-): ArgProvider<T> = argMain(shortChar, longHelp = longHelp, shortHelp = shortHelp, default = Maybe.Just(default), converter)
+): ArgProvider<T> = argMain(name, shortChar, longHelp = longHelp, shortHelp = shortHelp, default = Maybe.Just(default), converter)
 
 inline fun <reified T> Kargs.vararg(
     shortChar: Char? = null,
+    name: String? = null,
     shortHelp: String? = null,
     longHelp: String? = null,
     noinline converter: ((String) -> T)? = null,
@@ -68,21 +72,21 @@ inline fun <reified T> Kargs.vararg(
         longHelp = longHelp,
         type = typeOf<T>(),
         converter = newConverter,
-        name = property.name,
+        name = name ?: property.sanitisedName,
         requireRange = requireRange
     )
     thisRef.arguments.add(vararg)
-    return@PropertyDelegateProvider VarargDelegate<T>()
+    return@PropertyDelegateProvider VarargDelegate<T>(vararg.name)
 }
 
 
-class ArgumentDelegate<T>: ReadOnlyProperty<Kargs, T> {
+class ArgumentDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, T> {
     override operator fun getValue(thisRef: Kargs, property: KProperty<*>): T {
-        return thisRef.values[property.sanitisedName] as T
+        return thisRef.values[name] as T
     }
 }
-class VarargDelegate<T>: ReadOnlyProperty<Kargs, List<T>> {
+class VarargDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, List<T>> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): List<T> {
-        return thisRef.varargs[property.sanitisedName]?.let { it as List<T> } ?: emptyList()
+        return thisRef.varargs[name]?.let { it as List<T> } ?: emptyList()
     }
 }

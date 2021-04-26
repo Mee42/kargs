@@ -33,10 +33,11 @@ class VariadicFloating<T>(
 
 
 inline fun <reified T> Kargs.float(
-    shortHelp: String? = null,
-    longHelp: String? = null,
-    noinline converter: ((String) -> T)? = null,
+    shortHelp: String?,
+    longHelp: String?,
     default: Maybe<T>,
+    name: String?,
+    noinline converter: ((String) -> T)? = null,
 ): FloatingProvider<T> = PropertyDelegateProvider { thisRef, property ->
 
     if(thisRef.finalFloating != null) {
@@ -51,7 +52,7 @@ inline fun <reified T> Kargs.float(
         longHelp = longHelp,
         converter = newConverter,
         type = typeOf<T>(),
-        name = property.sanitisedName,
+        name = name ?: property.sanitisedName,
         default = default
     )
     if(default is Maybe.Nothing) {
@@ -62,32 +63,35 @@ inline fun <reified T> Kargs.float(
     }
     thisRef.floatingArgs += floating
     thisRef.arguments += floating
-    return@PropertyDelegateProvider FloatingDelegate<T>()
+    return@PropertyDelegateProvider FloatingDelegate<T>(floating.name)
 }
 
 // has NO default and is REQUIRED
 inline fun <reified T> Kargs.float(
     shortHelp: String? = null,
     longHelp: String? = null,
+    name: String? = null,
     noinline converter: ((String) -> T)? = null,
 ): FloatingProvider<T> = float(
-    shortHelp, longHelp, converter,
-    default = Maybe.Nothing(),
+    shortHelp = shortHelp, longHelp = longHelp, converter = converter,
+    default = Maybe.Nothing(), name = name
 )
 // has a default and is NOT REQUIRED
 inline fun <reified T> Kargs.float(
     shortHelp: String? = null,
     longHelp: String? = null,
     default: T,
+    name: String? = null,
     noinline converter: ((String) -> T)? = null,
 ): FloatingProvider<T> = float(
-    shortHelp, longHelp, converter,
-    default = Maybe.Just(default),
+    shortHelp, longHelp,
+    default = Maybe.Just(default), name, converter
 )
 
 inline fun <reified T> Kargs.floatMany(
     shortHelp: String? = null,
     longHelp: String? = null,
+    name: String? = null,
     noinline converter: ((String) -> T)? = null,
 ):VariadicFloatingProvider<T> = PropertyDelegateProvider { thisRef, property ->
 
@@ -103,16 +107,16 @@ inline fun <reified T> Kargs.floatMany(
         longHelp = longHelp,
         converter = newConverter,
         type = typeOf<T>(),
-        name = property.sanitisedName
+        name = name ?: property.sanitisedName
     )
     thisRef.finalFloating = arg
     return@PropertyDelegateProvider VariadicFloatingDelegate<T>()
 }
 
 
-class FloatingDelegate<T>: ReadOnlyProperty<Kargs, T> {
+class FloatingDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, T> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): T {
-        return thisRef.floatingValues[property.sanitisedName] as T
+        return thisRef.floatingValues[name] as T
     }
 }
 class VariadicFloatingDelegate<T>: ReadOnlyProperty<Kargs, List<T>> {

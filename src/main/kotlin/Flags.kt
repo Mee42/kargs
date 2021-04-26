@@ -5,9 +5,9 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 
-class FlagDelegate: ReadOnlyProperty<Kargs, Boolean> {
+class FlagDelegate(private val name: String): ReadOnlyProperty<Kargs, Boolean> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): Boolean {
-        return thisRef.specifiedFlags.contains(property.sanitisedName)
+        return thisRef.specifiedFlags.contains(name)
     }
 }
 
@@ -17,10 +17,11 @@ class Flag(
     shortChar: Char?,
     longHelp: String?,
     shortHelp: String?,
-): BasicNamed(name, shortChar, longHelp, shortHelp)
+): BasicNamed(name, shortChar, longHelp = longHelp, shortHelp = shortHelp)
 
 fun Kargs.flag(
     shortChar: Char? = null,
+    name: String? = null,
     longHelp: String? = null,
     shortHelp: String? = null,
 ): FlagProvider = PropertyDelegateProvider { thisRef, property ->
@@ -28,8 +29,8 @@ fun Kargs.flag(
         shortChar = shortChar,
         longHelp = longHelp,
         shortHelp = shortHelp,
-        name = property.sanitisedName
+        name = name ?: property.sanitisedName
     )
     thisRef.arguments += flag
-    return@PropertyDelegateProvider FlagDelegate()
+    return@PropertyDelegateProvider FlagDelegate(flag.name)
 }

@@ -109,10 +109,12 @@ class Vararg<T>(
 
 
 val KProperty<*>.sanitisedName: String
-    get() = this.name.replace(Regex("""([A-Z])""")) { it.value.lowercase() + "-" }
+    get() = this.name.replace(Regex("""([A-Z])""")) { "-" + it.value.lowercase() }
+
+
+
+
 /*
-
-
 TODO:
  ✔ named values
  ✔ flags
@@ -120,10 +122,17 @@ TODO:
  ✔ converting to types
  ✔ floating arguments (1, many)
  ✔ vararg values
- - allowing error state when converting to types
+ - allow graceful errors when converting
  - error handling in general
- - subcommands
- - help menu
- - passing name explicitly
+ ✔ subcommands
+ ✔ help menu
+ ✔ passing name explicitly, remove all access to property name besides the initial access
+ - split help into just "description" and "longHelp", and add "argHelp" (but not for flags), as well as a help for subcommands
+    description is for the -A --AAA      <description goes here> format
+    longHelp is for the man-page-like format?
+ - figure out exactly how the help api will work ^^^
+ -
+ - make look nice
+ - publish??
 
  */
