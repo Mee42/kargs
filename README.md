@@ -30,8 +30,10 @@ class AddCommand: Subcommand("add") {
 
 ```
 A fluent API for parsing command line arguments in kotlin.
-Support for:
-- [x] argument commands
+
+
+#### Support for: *(unchecked are in progress)*
+- [x] argument commands, long and short form
 - [x] flags
 - [x] variadic arguments
 - [x] floating arguments
@@ -39,19 +41,48 @@ Support for:
 - [x] default values
 - [x] implicit conversions to non-String types
 - [x] arbitrarily-nested subcommands
-- [x] help menu rendering
-
-Guide:
-
+- [ ] automatic help menu handling
+- [x] builtin help menu rendering, support for custom
 
 
+##### Getting started
+```kotlin
+class Args: Kargs() {
+    // your options, subcommands, flags, floating arguments, etc
+}
+fun main(args: Array<String>) {
+    val args = Kargs.parse(args, ::Args)
+}
+```
+Options can easily be specified by adding a variable bound to a function call. For example, to add an argument
+```
+val name by arg<String>()
+// or
+val name: String by arg()
+```
+This argument parser uses a space-based style for arguments, so this would be specified `--name Carson`. 
+The name will be picked up automatically by the name of the variable, or you can specify it:
+```
+val theUsersName by arg<String>(name = "name")
+```
+
+Arguments and flags will take in a `shortChar` option as the first parameter:
+```
+val name by arg<String>('n')
+```
+Which would parse `-n Carson`.
+
+Arguments specified without a default value are required, arguments with a default value are optional. To provide a default value:
+```
+val name by arg<String>(default = "")
+```
 
 
 
+*TODO: update help information.*
 
 
-
-Add to your project:
+#### Add to your project:
 ```groovy
 repositories {
     maven { url 'https://jitpack.io' }
