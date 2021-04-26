@@ -45,7 +45,7 @@ A fluent API for parsing command line arguments in kotlin.
 - [x] builtin help menu rendering, support for custom
 
 
-##### Getting started
+#### Getting started
 ```kotlin
 class Args: Kargs() {
     // your options, subcommands, flags, floating arguments, etc
@@ -54,32 +54,34 @@ fun main(args: Array<String>) {
     val args = Kargs.parse(args, ::Args)
 }
 ```
+#### Arguments
 Options can easily be specified by adding a variable bound to a function call. For example, to add an argument
-```
-val name by arg<String>()
+```kotlin
+val name by arg<String>() // --name Carson
 // or
 val name: String by arg()
-```
-This argument parser uses a space-based style for arguments, so this would be specified `--name Carson`. 
-The name will be picked up automatically by the name of the variable, or you can specify it:
-```
-val theUsersName by arg<String>(name = "name")
-```
+// The '--name' name will be picked up automatically by the name of the variable, or you can specify it
+val theUsersName by arg<String>(name = "foobar") --foobar Carson
+//  Arguments and flags will take in a `shortChar` option as the first parameter:
+val name by arg<String>('n') // -n Carson
 
-Arguments and flags will take in a `shortChar` option as the first parameter:
-```
-val name by arg<String>('n')
-```
-Which would parse `-n Carson`.
+// Arguments specified without a default value are required, arguments with a default value are optional.
+val name by arg<String>(default = "") // optional
 
-Arguments specified without a default value are required, arguments with a default value are optional. To provide a default value:
-```
-val name by arg<String>(default = "")
-```
+// you can use specify a different type than String for all options with values.
+val file: File by arg<File>('f') // --file test.txt
+
+// converters to some types are predefined, or can be specified inline
+val file by arg<File>('f', converter = ::File)
+// see below for more converter information
 
 
 
-*TODO: update help information.*
+```
+
+
+
+*TODO: make code changes and add help information.*
 
 
 #### Add to your project:
