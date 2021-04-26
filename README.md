@@ -27,7 +27,35 @@ class AddCommand: Subcommand("add") {
 }
 
 ```
-
 A fluent API for parsing command line arguments in kotlin.
 
-
+Add to your project:
+```groovy
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+dependencies {
+    implementation 'com.github.mee42:kargs:master-SNAPSHOT'
+}
+```
+```kotlin
+repositories {
+    maven { url = uri("https://jitpack.io") }
+}
+dependencies {
+    implementation 'com.github.mee42:kargs:master-SNAPSHOT'
+}
+```
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+<dependency>
+    <groupId>com.github.mee42</groupId>
+    <artifactId>kargs</artifactId>
+    <version>master-SNAPSHOT</version>
+</dependency>
+```
