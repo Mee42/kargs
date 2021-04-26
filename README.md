@@ -1,7 +1,6 @@
 # Kargs: An Kotlin argument parser
 
-[![Release](https://jitpack.io/v/mee42/kargs.svg)]
-(https://jitpack.io/#mee42/kargs)
+[![Release](https://jitpack.io/v/mee42/kargs.svg)](https://jitpack.io/#mee42/kargs)
 
 ```kotlin
 class Args: Kargs() {
