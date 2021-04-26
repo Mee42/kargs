@@ -127,6 +127,8 @@ TODO:
  ✔ subcommands
  ✔ help menu
  ✔ passing name explicitly, remove all access to property name besides the initial access
+ - make things that need to be private, private
+ - add options to add a global converter
  - split help into just "description" and "longHelp", and add "argHelp" (but not for flags), as well as a help for subcommands
     description is for the -A --AAA      <description goes here> format
     longHelp is for the man-page-like format?
