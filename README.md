@@ -62,6 +62,7 @@ val name by arg<String>() // --name Carson
 val name: String by arg()
 // The '--name' name will be picked up automatically by the name of the variable, or you can specify it
 val theUsersName by arg<String>(name = "foobar") --foobar Carson
+
 //  Arguments and flags will take in a `shortChar` option as the first parameter:
 val name by arg<String>('n') // -n Carson
 
@@ -75,10 +76,16 @@ val file: File by arg<File>('f') // --file test.txt
 val file by arg<File>('f', converter = ::File)
 // see below for more converter information
 
+// TODO more information on help messages
 
-
+// arguments that can be specified more than once can use the vararg function
+val files: List<File> by vararg<File>('f', converter = ::File, name = "file")
 ```
-
+Flags are like arguments, but take no arguments. The type is always boolean, and they can't be varadic
+```
+val help by flag('h')
+```
+Floating arguments hold
 
 
 *TODO: make code changes and add help information.*
