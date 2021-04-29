@@ -3,22 +3,24 @@ package dev.mee42.kargs
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
+import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 
-inline fun <reified T> Kargs.argMain(
+fun <T> Internal.argMain(
     name: String?,
     shortChar: Char?,
     longHelp: String?,
     shortHelp: String?,
     default: Maybe<T>,
-    noinline converter: ((String) -> T)?
+    converter: ((String) -> T)?,
+    kType: KType,
 ):ArgProvider<T>  = PropertyDelegateProvider { thisRef, property ->
     // the converter ONLY runs when a value is specified
     //
     val newConverter = converter?.let { f -> { it, _ -> f(it) } } // add an ignored type argument that we don't expose to the user
-        ?: thisRef.getConverterForType<T>()?.convert
-        ?: error("can't convert string to ${typeOf<T>().classifier}")
+        ?: getConverterForType<T>(kType)?.convert
+        ?: error("can't convert string to ${kType.classifier}")
 
 
     val arg = NamedValue(
@@ -27,7 +29,7 @@ inline fun <reified T> Kargs.argMain(
         longHelp = longHelp,
         shortHelp = shortHelp,
         converter = newConverter,
-        type = typeOf<T>(),
+        type = kType,
         default = default
     )
     thisRef.arguments += arg
@@ -41,7 +43,7 @@ inline fun <reified T: Any?> Kargs.arg(
     longHelp: String? = null,
     shortHelp: String? = null,
     noinline converter: ((String) -> T)? = null
-): ArgProvider<T> = argMain(name, shortChar, longHelp, shortHelp, default = Maybe.Nothing(), converter)
+): ArgProvider<T> = Internal.argMain(name, shortChar, longHelp, shortHelp, default = Maybe.Nothing(), converter, typeOf<T>())
 
 // can be nullable, DOES have a a default parameter
 inline fun <reified T: Any?> Kargs.arg(
@@ -51,7 +53,9 @@ inline fun <reified T: Any?> Kargs.arg(
     shortHelp: String? = null,
     default: T,
     noinline converter: ((String) -> T)? = null
-): ArgProvider<T> = argMain(name, shortChar, longHelp = longHelp, shortHelp = shortHelp, default = Maybe.Just(default), converter)
+): ArgProvider<T> = Internal.argMain(name, shortChar, longHelp = longHelp, shortHelp = shortHelp, default = Maybe.Just(default), converter, typeOf<T>())
+
+
 
 inline fun <reified T> Kargs.vararg(
     shortChar: Char? = null,
@@ -60,17 +64,27 @@ inline fun <reified T> Kargs.vararg(
     longHelp: String? = null,
     noinline converter: ((String) -> T)? = null,
     requireRange: IntRange = 0..Int.MAX_VALUE,
+): VarargProvider<T> = Internal.varargWrapper(typeOf<T>(), shortChar, name, shortHelp, longHelp, converter, requireRange)
+
+fun <T> Internal.varargWrapper(
+    kType: KType,
+    shortChar: Char? = null,
+    name: String? = null,
+    shortHelp: String? = null,
+    longHelp: String? = null,
+    converter: ((String) -> T)? = null,
+    requireRange: IntRange = 0..Int.MAX_VALUE,
 ): VarargProvider<T> = PropertyDelegateProvider { thisRef, property ->
 
     val newConverter = converter?.let { f -> { it, _ -> f(it) } } // add an ignored type argument that we don't expose to the user
-        ?: thisRef.getConverterForType<T>()?.convert
-        ?: error("can't convert string to ${typeOf<T>().classifier}")
+        ?: getConverterForType<T>(kType)?.convert
+        ?: error("can't convert string to ${kType.classifier}")
 
     val vararg = Vararg(
         shortChar = shortChar,
         shortHelp = shortHelp,
         longHelp = longHelp,
-        type = typeOf<T>(),
+        type = kType,
         converter = newConverter,
         name = name ?: property.sanitisedName,
         requireRange = requireRange
@@ -80,12 +94,12 @@ inline fun <reified T> Kargs.vararg(
 }
 
 
-class ArgumentDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, T> {
+private class ArgumentDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, T> {
     override operator fun getValue(thisRef: Kargs, property: KProperty<*>): T {
         return thisRef.values[name] as T
     }
 }
-class VarargDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, List<T>> {
+private class VarargDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, List<T>> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): List<T> {
         return thisRef.varargs[name]?.let { it as List<T> } ?: emptyList()
     }

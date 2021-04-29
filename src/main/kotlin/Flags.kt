@@ -5,14 +5,14 @@ import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 
-class FlagDelegate(private val name: String): ReadOnlyProperty<Kargs, Boolean> {
+private class FlagDelegate(private val name: String): ReadOnlyProperty<Kargs, Boolean> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): Boolean {
         return thisRef.specifiedFlags.contains(name)
     }
 }
 
 
-class Flag(
+internal class Flag(
     name: String,
     shortChar: Char?,
     longHelp: String?,

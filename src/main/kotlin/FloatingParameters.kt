@@ -6,13 +6,13 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-typealias FloatingProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, T>>
-typealias VariadicFloatingProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, List<T>>>
+internal typealias FloatingProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, T>>
+internal typealias VariadicFloatingProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, List<T>>>
 
 
 
 
-class Floating<T>(
+internal class Floating<T>(
     name: String,
     longHelp: String?,
     shortHelp: String?,
@@ -21,7 +21,7 @@ class Floating<T>(
     val default: Maybe<T>,
 ): Argument(name, longHelp, shortHelp)
 
-class VariadicFloating<T>(
+internal class VariadicFloating<T>(
     name: String,
     longHelp: String?,
     shortHelp: String?,
@@ -32,26 +32,27 @@ class VariadicFloating<T>(
 // otherwise it is not
 
 
-inline fun <reified T> Kargs.float(
+fun <T> Internal.floatWrapper(
     shortHelp: String?,
     longHelp: String?,
     default: Maybe<T>,
     name: String?,
-    noinline converter: ((String) -> T)? = null,
+    converter: ((String) -> T)? = null,
+    kType: KType,
 ): FloatingProvider<T> = PropertyDelegateProvider { thisRef, property ->
 
     if(thisRef.finalFloating != null) {
         error("can not define floating arguments after a floatMany() has been defined")
     }
     val newConverter = converter?.let { f -> { it, _ -> f(it) } } // add an ignored type argument that we don't expose to the user
-        ?: thisRef.getConverterForType<T>()?.convert
-        ?: error("can't convert string to ${typeOf<T>().classifier}")
+        ?: getConverterForType<T>(kType)?.convert
+        ?: error("can't convert string to ${kType.classifier}")
 
     val floating = Floating(
         shortHelp = shortHelp,
         longHelp = longHelp,
         converter = newConverter,
-        type = typeOf<T>(),
+        type = kType,
         name = name ?: property.sanitisedName,
         default = default
     )
@@ -72,9 +73,9 @@ inline fun <reified T> Kargs.float(
     longHelp: String? = null,
     name: String? = null,
     noinline converter: ((String) -> T)? = null,
-): FloatingProvider<T> = float(
+): FloatingProvider<T> = Internal.floatWrapper(
     shortHelp = shortHelp, longHelp = longHelp, converter = converter,
-    default = Maybe.Nothing(), name = name
+    default = Maybe.Nothing(), name = name, kType = typeOf<T>()
 )
 // has a default and is NOT REQUIRED
 inline fun <reified T> Kargs.float(
@@ -83,30 +84,41 @@ inline fun <reified T> Kargs.float(
     default: T,
     name: String? = null,
     noinline converter: ((String) -> T)? = null,
-): FloatingProvider<T> = float(
+): FloatingProvider<T> = Internal.floatWrapper(
     shortHelp, longHelp,
-    default = Maybe.Just(default), name, converter
+    default = Maybe.Just(default), name, converter,
+    kType = typeOf<T>()
 )
+
 
 inline fun <reified T> Kargs.floatMany(
     shortHelp: String? = null,
     longHelp: String? = null,
     name: String? = null,
     noinline converter: ((String) -> T)? = null,
+):VariadicFloatingProvider<T> = Internal.floatManyWrapper(shortHelp, longHelp, name, converter, typeOf<T>())
+
+
+fun <T> Internal.floatManyWrapper(
+    shortHelp: String? = null,
+    longHelp: String? = null,
+    name: String? = null,
+    converter: ((String) -> T)? = null,
+    kType: KType,
 ):VariadicFloatingProvider<T> = PropertyDelegateProvider { thisRef, property ->
 
     if(thisRef.finalFloating != null) {
         error("can not define more than one variadic floating argument")
     }
     val newConverter = converter?.let { f -> { it, _ -> f(it) } } // add an ignored type argument that we don't expose to the user
-        ?: thisRef.getConverterForType<T>()?.convert
-        ?: error("can't convert string to ${typeOf<T>().classifier}")
+        ?: getConverterForType<T>(kType)?.convert
+        ?: error("can't convert string to ${kType.classifier}")
 
     val arg = VariadicFloating(
         shortHelp = shortHelp,
         longHelp = longHelp,
         converter = newConverter,
-        type = typeOf<T>(),
+        type = kType,
         name = name ?: property.sanitisedName
     )
     thisRef.finalFloating = arg
@@ -114,12 +126,12 @@ inline fun <reified T> Kargs.floatMany(
 }
 
 
-class FloatingDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, T> {
+private class FloatingDelegate<T>(private val name: String): ReadOnlyProperty<Kargs, T> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): T {
         return thisRef.floatingValues[name] as T
     }
 }
-class VariadicFloatingDelegate<T>: ReadOnlyProperty<Kargs, List<T>> {
+private class VariadicFloatingDelegate<T>: ReadOnlyProperty<Kargs, List<T>> {
     override fun getValue(thisRef: Kargs, property: KProperty<*>): List<T> {
         return thisRef.finalFloatingValues as List<T>
     }

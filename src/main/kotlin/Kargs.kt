@@ -13,72 +13,69 @@ import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.internal.impl.metadata.ProtoBuf
 import kotlin.reflect.typeOf
 
-typealias ArgProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, T>>
-typealias VarargProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, List<T>>>
-typealias FlagProvider = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, Boolean>>
-typealias SubcommandProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, T?>>
+internal typealias ArgProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, T>>
+internal typealias VarargProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, List<T>>>
+internal typealias FlagProvider = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, Boolean>>
+internal typealias SubcommandProvider<T> = PropertyDelegateProvider<Kargs, ReadOnlyProperty<Kargs, T?>>
 
-
+object Internal
 
 class Converter<T>(val convert: (String, KType) -> T)
 
 open class Kargs {
-    val arguments = mutableListOf<Argument>()
-    val specifiedFlags = mutableSetOf<String>()
-    val values = mutableMapOf<String, Any?>() // contains lookup name -> value
-    val varargs = mutableMapOf<String, List<Any?>>()
-    val floatingArgs = mutableListOf<Floating<*>>()
-    var finalFloating: VariadicFloating<*>? = null
-    val floatingValues = mutableMapOf<String, Any?>()
-    val finalFloatingValues = mutableListOf<Any?>()
-    val subcommands = mutableListOf<Subcommand>()
-    var subcommandPicked: Pair<String, Subcommand>? = null // this will be set to something if a subcommand is seleceted, otherwise it'll stay null
+    internal val arguments = mutableListOf<Argument>()
+    internal val specifiedFlags = mutableSetOf<String>()
+    internal val values = mutableMapOf<String, Any?>() // contains lookup name -> value
+    internal val varargs = mutableMapOf<String, List<Any?>>()
+    internal val floatingArgs = mutableListOf<Floating<*>>()
+    internal var finalFloating: VariadicFloating<*>? = null
+    internal val floatingValues = mutableMapOf<String, Any?>()
+    internal val finalFloatingValues = mutableListOf<Any?>()
+    internal val subcommands = mutableListOf<Subcommand>()
+    internal var subcommandPicked: Pair<String, Subcommand>? = null // this will be set to something if a subcommand is seleceted, otherwise it'll stay null
+    companion object {
+        // BETTER BE THE SAME
+        internal val converterLookup = mutableMapOf<KType, Converter<*>>(
+            // some reasonable defaults
+            typeOf<String>() to Converter { it, _ -> it },
+            typeOf<Int>() to Converter { it, _ ->
+                it.toIntOrNull() ?: error("Tried to convert \"$it\" to integer, but could not parse")
+            },
+            typeOf<File>() to Converter { it, _ -> File(it) },
+            // TODO some way to signal a failed conversion
+        )
 
-    // BETTER BE THE FUCKING SAME
-    val converterLookup = mutableMapOf<KType, Converter<*>>(
-        // some reasonable defaults
-        typeOf<String>()   to Converter { it, _ -> it },
-        typeOf<Int>()      to Converter { it, _ -> it.toIntOrNull() ?: error("Tried to convert \"$it\" to integer, but could not parse") },
-        typeOf<File>()     to Converter { it, _ -> File(it) },
-        // TODO some way to signal a failed conversion
-    )
-    val converterIterativeLookup = mutableListOf<Pair<(KType) -> Boolean, Converter<*>>>(
-        { it: KType -> (it.classifier as? KClass<*>)?.java?.isEnum ?: false } to Converter { it, type ->
-            val enums = (type.classifier!! as KClass<Enum<*>>).java.enumConstants
-            enums.firstOrNull { enum ->
-                enum.name.lowercase() == it.lowercase()
-            } ?: error("expected one of these: ${enums.toList()}, but got \"$it\"")
-        }
-    )
-
-
-    companion object
+        internal val converterIterativeLookup = mutableListOf<Pair<(KType) -> Boolean, Converter<*>>>(
+            { it: KType -> (it.classifier as? KClass<*>)?.java?.isEnum ?: false } to Converter { it, type ->
+                val enums = (type.classifier!! as KClass<Enum<*>>).java.enumConstants
+                enums.firstOrNull { enum ->
+                    enum.name.lowercase() == it.lowercase()
+                } ?: error("expected one of these: ${enums.toList()}, but got \"$it\"")
+            }
+        )
+    }
 }
-
-
-inline fun <reified T> Kargs.getConverterForType(): Converter<T>? {
-    val kType = typeOf<T>()
-    val x = this.converterLookup[kType.withNullability(false)]
-        ?: converterIterativeLookup.firstOrNull { it.first(kType) }?.second
+internal fun <T> getConverterForType(kType: KType): Converter<T>? {
+    val x = Kargs.converterLookup[kType.withNullability(false)]
+        ?: Kargs.converterIterativeLookup.firstOrNull { it.first(kType) }?.second
     return x as Converter<T>?
 }
 
 
-
-open class Argument(
+internal open class Argument(
     val name: String,
     val longHelp: String?,
     val shortHelp: String?,
 )
 
-sealed class BasicNamed(
+internal sealed class BasicNamed(
     name: String,
     val shortChar: Char?,
     shortHelp: String?,
     longHelp: String?,
 ): Argument(name, longHelp, shortHelp)
 
-sealed class BasicNamedValue<T>(
+internal sealed class BasicNamedValue<T>(
     name: String,
     shortChar: Char?,
     shortHelp: String?,
@@ -86,7 +83,7 @@ sealed class BasicNamedValue<T>(
     val converter: (String, KType) -> T,
     val type: KType): BasicNamed(name, shortChar, longHelp, shortHelp)
 
-class NamedValue<T>(
+internal class NamedValue<T>(
     name: String,
     shortChar: Char?,
     longHelp: String?,
@@ -96,7 +93,7 @@ class NamedValue<T>(
     val default: Maybe<T>
 ): BasicNamedValue<T>(name, shortChar, longHelp, shortHelp, converter, type)
 
-class Vararg<T>(
+internal class Vararg<T>(
     name: String,
     shortChar: Char?,
     longHelp: String?,
@@ -108,7 +105,7 @@ class Vararg<T>(
 
 
 
-val KProperty<*>.sanitisedName: String
+internal val KProperty<*>.sanitisedName: String
     get() = this.name.replace(Regex("""([A-Z])""")) { "-" + it.value.lowercase() }
 
 
