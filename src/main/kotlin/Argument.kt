@@ -62,8 +62,8 @@ inline fun <reified T> Kargs.vararg(
     name: String? = null,
     shortHelp: String? = null,
     longHelp: String? = null,
-    noinline converter: ((String) -> T)? = null,
     requireRange: IntRange = 0..Int.MAX_VALUE,
+    noinline converter: ((String) -> T)? = null,
 ): VarargProvider<T> = Internal.varargWrapper(typeOf<T>(), shortChar, name, shortHelp, longHelp, converter, requireRange)
 
 fun <T> Internal.varargWrapper(
@@ -72,8 +72,8 @@ fun <T> Internal.varargWrapper(
     name: String? = null,
     shortHelp: String? = null,
     longHelp: String? = null,
-    converter: ((String) -> T)? = null,
     requireRange: IntRange = 0..Int.MAX_VALUE,
+    converter: ((String) -> T)? = null,
 ): VarargProvider<T> = PropertyDelegateProvider { thisRef, property ->
 
     val newConverter = converter?.let { f -> { it, _ -> f(it) } } // add an ignored type argument that we don't expose to the user
