@@ -105,7 +105,7 @@ repositories {
     maven { url = uri("https://jitpack.io") }
 }
 dependencies {
-    implementation 'com.github.mee42:kargs:master-SNAPSHOT'
+    implementation("com.github.mee42:kargs:master-SNAPSHOT")
 }
 ```
 ```xml
