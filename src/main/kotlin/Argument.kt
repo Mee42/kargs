@@ -64,7 +64,7 @@ inline fun <reified T> Kargs.vararg(
     longHelp: String? = null,
     requireRange: IntRange = 0..Int.MAX_VALUE,
     noinline converter: ((String) -> T)? = null,
-): VarargProvider<T> = Internal.varargWrapper(typeOf<T>(), shortChar, name, shortHelp, longHelp, converter, requireRange)
+): VarargProvider<T> = Internal.varargWrapper(typeOf<T>(), shortChar, name, shortHelp, longHelp, requireRange, converter)
 
 fun <T> Internal.varargWrapper(
     kType: KType,

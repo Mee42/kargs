@@ -2,7 +2,7 @@ package dev.mee42.kargs
 
 
 
-fun parseOutArgument(t:Kargs, argument: BasicNamedValue<*>, value: String, preceding: String) {
+private fun parseOutArgument(t:Kargs, argument: BasicNamedValue<*>, value: String, preceding: String) {
     if (value.startsWith("-") && value != "-") error("was expecting a value after \"$preceding\", but got \"$value\"")
     // TODO check for error in conversion
     val convertedValue = argument.converter(value, argument.type)
