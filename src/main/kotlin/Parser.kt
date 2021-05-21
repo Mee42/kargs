@@ -1,5 +1,6 @@
 package dev.mee42.kargs
 
+import java.io.File
 
 
 private fun parseOutArgument(t:Kargs, argument: BasicNamedValue<*>, value: String, preceding: String) {
@@ -10,10 +11,16 @@ private fun parseOutArgument(t:Kargs, argument: BasicNamedValue<*>, value: Strin
         is NamedValue<*> -> t.values[argument.name] = convertedValue
         is Vararg<*> -> t.varargs[argument.name] = (t.varargs[argument.name] ?: emptyList()) + convertedValue
     }
+
 }
 
-fun <T: Kargs> Kargs.Companion.parse(args: Array<String>, constructor: () -> T): T {
-    val tokens = ArrayDeque(args.toList())
+fun envFile(name: String): List<String> = File(name).readLines()
+
+fun <T: Kargs> Kargs.Companion.parse(args: Array<String>, envVarName: String? = null, constructor: () -> T): T {
+    val configFile = envVarName?.let { System.getProperty(it, null) }
+        ?.takeUnless(String::isBlank)
+        ?.let(::envFile) ?: emptyList()
+    val tokens = ArrayDeque(configFile + args.toList())
     val t = constructor()
 
 

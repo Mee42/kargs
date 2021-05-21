@@ -30,7 +30,7 @@ class AddCommand: Subcommand("add") {
 
 fun main() {
     val args = "--help".split(" ").toTypedArray()
-    val parsed = Kargs.parse(args, ::Args)
+    val parsed = Kargs.parse(args, null, ::Args)
     println(genHelpMenu(true, "git", parsed, 40, true))
     parsed.status?.let(::statusCommand)
 }
